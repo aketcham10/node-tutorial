@@ -1,27 +1,33 @@
+const express = require('express');
+const Song = require('./models/songs');
+const cors = require('cors');
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const { env } = require('process');
-const uri = env.MONGODB_URI;
+const app = express();
+app.use(express.json());
+app.use(cors());
+const router = express.Router();
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
+// Retrieve all Song in the database
+router.get("/songs", async (req, res) => {
+  try {
+    const songs = await Song.find({});
+    res.send(songs);
+    console.log(songs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
-async function run() {
+router.post("/songs/new", async (req, res) => {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
+    const song = await Song.create(req.body);
+    res.send(song);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-}
-run().catch(console.dir);
+})
+
+app.use('/api', router);
+
+app.listen(3000);
+
